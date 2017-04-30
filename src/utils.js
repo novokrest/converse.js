@@ -41,9 +41,17 @@
     };
 
     var afterAnimationEnd = function (el, callback) {
+        console.log('DEV: utils: fadeIn()-7');
         el.classList.remove('visible');
         if (_.isFunction(callback)) {
-            callback();
+            console.log('DEV: utils: fadeIn()-8');
+            try {
+                console.log('DEV: utils: fadeIn()-8-1:', callback);
+                callback();
+            } catch (err) {
+                console.log('DEV: utils: fadeIn()-9: ERROR:', err);
+            }
+            
         }
     };
 
@@ -201,14 +209,19 @@
         },
 
         fadeIn: function (el, callback) {
+            console.log('DEV: utils: fadeIn()-1');
             if ($.fx.off) {
+                console.log('DEV: utils: fadeIn()-2');
                 el.classList.remove('hidden');
                 if (_.isFunction(callback)) {
+                    console.log('DEV: utils: fadeIn()-3');
                     callback();
                 }
                 return;
             }
+            console.log('DEV: utils: fadeIn()-4');
             if (_.includes(el.classList, 'hidden')) {
+                console.log('DEV: utils: fadeIn()-5');
                 /* XXX: This doesn't appear to be working...
                     el.addEventListener("webkitAnimationEnd", _.partial(afterAnimationEnd, el, callback), false);
                     el.addEventListener("animationend", _.partial(afterAnimationEnd, el, callback), false);
@@ -217,6 +230,7 @@
                 el.classList.add('visible');
                 el.classList.remove('hidden');
             } else {
+                console.log('DEV: utils: fadeIn()-6');
                 afterAnimationEnd(el, callback);
             }
         },

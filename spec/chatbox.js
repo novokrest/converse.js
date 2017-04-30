@@ -1773,8 +1773,8 @@
                 test_utils.openContactsPanel(_converse);
 
                 spyOn(_converse, 'emit');
-                expect(_converse.msg_counter).toBe(0);
-                spyOn(_converse, 'incrementMsgCounter').and.callThrough();
+                expect(_converse.getUnreadMsgCount()).toBe(0);
+                spyOn(_converse, 'updateUnreadMsgCounter').and.callThrough();
                 var previous_state = _converse.windowState;
                 var message = 'This message will increment the message counter';
                 var sender_jid = mock.cur_names[0].replace(/ /g,'.').toLowerCase() + '@localhost',
@@ -1787,8 +1787,8 @@
                       .c('active', {'xmlns': 'http://jabber.org/protocol/chatstates'}).tree();
                 _converse.windowState = 'hidden';
                 _converse.chatboxes.onMessage(msg);
-                expect(_converse.incrementMsgCounter).toHaveBeenCalled();
-                expect(_converse.msg_counter).toBe(1);
+                expect(_converse.updateUnreadMsgCounter).toHaveBeenCalled();
+                expect(_converse.getUnreadMsgCount()).toBe(1);
                 expect(_converse.emit).toHaveBeenCalledWith('message', jasmine.any(Object));
                 _converse.windowSate = previous_state;
             }));
@@ -1809,8 +1809,8 @@
                 test_utils.openControlBox();
                 test_utils.openContactsPanel(_converse);
 
-                expect(_converse.msg_counter).toBe(0);
-                spyOn(_converse, 'incrementMsgCounter').and.callThrough();
+                expect(_converse.getUnreadMsgCount()).toBe(0);
+                spyOn(_converse, 'updateUnreadMsgCounter').and.callThrough();
                 _converse.saveWindowState(null, 'focus');
                 var message = 'This message will not increment the message counter';
                 var sender_jid = mock.cur_names[0].replace(/ /g,'.').toLowerCase() + '@localhost',
@@ -1822,8 +1822,8 @@
                     }).c('body').t(message).up()
                       .c('active', {'xmlns': 'http://jabber.org/protocol/chatstates'}).tree();
                 _converse.chatboxes.onMessage(msg);
-                expect(_converse.incrementMsgCounter).not.toHaveBeenCalled();
-                expect(_converse.msg_counter).toBe(0);
+                expect(_converse.updateUnreadMsgCounter).not.toHaveBeenCalled();
+                expect(_converse.getUnreadMsgCount()).toBe(0);
             }));
         });
     });

@@ -104,6 +104,7 @@
                 },
 
                 initialize: function () {
+                    console.log('DEV: converse-chatview: ChatBoxView: initialize()');
                     this.model.messages.on('add', this.onMessageAdded, this);
                     this.model.on('show', this.show, this);
                     this.model.on('destroy', this.hide, this);
@@ -150,8 +151,9 @@
                 },
 
                 fetchMessages: function () {
+                    console.log('DEV: converse-chatview: fetchMessages');
                     this.model.messages.fetch({
-                        'add': true,
+                        'add': false,
                         'success': this.afterMessagesFetched.bind(this),
                         'error': this.afterMessagesFetched.bind(this),
                     });
@@ -422,10 +424,15 @@
                         if (this.model.get('scrolled', true)) {
                             this.$el.find('.new-msgs-indicator').removeClass('hidden');
                         }
-                        if (_converse.windowState === 'hidden' || this.model.get('scrolled', true)) {
-                            _converse.incrementMsgCounter();
+                        if (this.isNewMessageHidden()) {
+                            console.log('DEV: converse-chatview: updateNewMessageIndicators()-1:', this.model);
+                            this.model.incrementUnreadMsgCounter();
                         }
                     }
+                },
+
+                isNewMessageHidden: function() {
+                    return _converse.windowState === 'hidden' || this.model.get('scrolled', true);
                 },
 
                 handleTextMessage: function (message) {
@@ -779,17 +786,20 @@
                 },
 
                 hide: function () {
+                    console.log('DEV: converse-chatview: hide()');
                     this.el.classList.add('hidden');
                     utils.refreshWebkit();
                     return this;
                 },
 
                 afterShown: function (focus) {
+                    console.log('converse-chatview: ChatboxView: afterShown-1()')
                     if (_converse.connection.connected) {
                         // Without a connection, we haven't yet initialized
                         // localstorage
                         this.model.save();
                     }
+                    console.log('converse-chatview: ChatboxView: afterShown-2()')
                     this.setChatState(_converse.ACTIVE);
                     this.scrollDown();
                     if (focus) {
@@ -803,10 +813,17 @@
                         if (focus) { this.focus(); }
                         return;
                     }
-                    utils.fadeIn(this.el, _.bind(this.afterShown, this, focus));
+                    console.log('DEV: converse-chatview: _show()');
+                    try {
+                        utils.fadeIn(this.el, _.bind(this.afterShown, this, focus));
+                    } catch (err) {
+                        console.log('DEV: converse-chatview: _show(): ERROR:', err);
+                    }
+                    
                 },
 
                 show: function (focus) {
+                    console.log('DEV: converse-chatview: show()');
                     if (_.isUndefined(this.debouncedShow)) {
                         /* We wrap the method in a debouncer and set it on the
                          * instance, so that we have it debounced per instance.
@@ -844,8 +861,8 @@
                         (this.$content.scrollTop() + this.$content.innerHeight()) >=
                             this.$content[0].scrollHeight-10;
                     if (is_at_bottom) {
-                        this.hideNewMessagesIndicator();
                         this.model.save('scrolled', false);
+                        this.onScrolledDown();
                     } else {
                         // We're not at the bottom of the chat area, so we mark
                         // that the box is in a scrolled-up state.
@@ -862,9 +879,15 @@
                     /* Inner method that gets debounced */
                     if (this.$content.is(':visible') && !this.model.get('scrolled')) {
                         this.$content.scrollTop(this.$content[0].scrollHeight);
-                        this.hideNewMessagesIndicator();
+                        this.onScrolledDown();
                         this.model.save({'auto_scrolled': true});
                     }
+                },
+
+                onScrolledDown: function() {
+                    this.hideNewMessagesIndicator();
+                    this.model.clearUnreadMsgCounter();
+                    _converse.emit('chatBoxScrolledDown', {'chatbox': this.model});
                 },
 
                 scrollDown: function () {

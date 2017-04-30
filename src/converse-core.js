@@ -286,7 +286,6 @@
          * https://github.com/jcbrand/converse.js/issues/521
          */
         this.send_initial_presence = true;
-        this.msg_counter = 0;
         this.user_settings = settings; // Save the user settings so that they can be used by plugins
 
         // Module-level functions
@@ -519,26 +518,31 @@
             }
         };
 
-        this.updateMsgCounter = function () {
-            if (this.msg_counter > 0) {
+        this.updateUnreadMsgCounter = function () {
+            console.log('DEV: converse-core: updateUnreadMsgCounter():', _converse.chatboxes);
+            //var unreadMsgCount = _.reduce(_converse.chatboxes, (sum, chatbox) => sum + chatbox.get('num_unread'), 0);
+            var unreadMsgCount = this.getUnreadMsgCount();
+            console.log('DEV: unreadMsgCount =', unreadMsgCount);
+            if (unreadMsgCount > 0) {
                 if (document.title.search(/^Messages \(\d+\) /) === -1) {
-                    document.title = "Messages (" + this.msg_counter + ") " + document.title;
+                    document.title = "Messages (" + unreadMsgCount + ") " + document.title;
                 } else {
-                    document.title = document.title.replace(/^Messages \(\d+\) /, "Messages (" + this.msg_counter + ") ");
+                    document.title = document.title.replace(/^Messages \(\d+\) /, "Messages (" + unreadMsgCount + ") ");
                 }
-            } else if (document.title.search(/^Messages \(\d+\) /) !== -1) {
-                document.title = document.title.replace(/^Messages \(\d+\) /, "");
+            } else {
+                this.clearMsgCounter();
             }
         };
 
-        this.incrementMsgCounter = function () {
-            this.msg_counter += 1;
-            this.updateMsgCounter();
+        this.getUnreadMsgCount = function() {
+            return _converse.chatboxes.reduce((sum, chatbox) => sum + chatbox.get('num_unread'), 0);
         };
 
         this.clearMsgCounter = function () {
-            this.msg_counter = 0;
-            this.updateMsgCounter();
+            console.log('DEV: converse-core: clearMsgCounter()');
+            if (document.title.search(/^Messages \(\d+\) /) !== -1) {
+                document.title = document.title.replace(/^Messages \(\d+\) /, "");
+            }
         };
 
         this.initStatus = function () {
@@ -1415,6 +1419,23 @@
 
             createMessage: function (message, delay, original_stanza) {
                 return this.messages.create(this.getMessageAttributes.apply(this, arguments));
+            },
+
+            incrementUnreadMsgCounter: function() {
+                console.log('DEV: converse-core: incrementUnreadMsgCounter:', this.get('num_unread'));
+                this.save({'num_unread': this.get('num_unread') + 1});
+                _converse.updateUnreadMsgCounter();
+            },
+
+            clearUnreadMsgCounter: function() {
+                console.log('DEV: converse-core: clearUnreadMsgCounter-1:', this.get('num_unread'));
+                this.save({'num_unread': 0});
+                console.log('DEV: converse-core: clearUnreadMsgCounter-2:', this.get('num_unread'));
+                _converse.updateUnreadMsgCounter();
+            },
+
+            isScrolledUp: function () {
+                return this.get('scrolled', true);
             }
         });
 
